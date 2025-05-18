@@ -12,11 +12,13 @@ function love.load()
     loadSprite('player')
     loadSprite('zombie')
     loadSprite('deadZombie')
+		initialPlayerSpeed = 3*framerate
 
     player = {
         x = love.graphics.getWidth() / 2,
         y = love.graphics.getHeight() / 2,
-        speed = 3*framerate,
+        speed = initialPlayerSpeed,
+        injured = false
     }
 
     myFont = love.graphics.newFont(30)
@@ -57,12 +59,22 @@ function love.update(dt)
                 goto continue
             end
             -- player touched a live zombie
-            for i,z in ipairs(zombies) do
-                zombies[i] = nil
+            if player.injured then
+                -- player already injured - game over
+                for i,z in ipairs(zombies) do
+                    zombies[i] = nil
+                end
                 highScore = math.max(score, highScore)
                 gameState = 1
                 player.x = love.graphics.getWidth()/2
                 player.y = love.graphics.getHeight()/2
+								player.speed = initialPlayerSpeed
+								player.injured = false
+            else
+								-- player is injured. increase speed
+              	player.injured = true
+								player.speed = player.speed*1.5
+								z.dead = true
             end
         end
         if not z.dead then
@@ -135,8 +147,11 @@ function love.draw()
     end
     love.graphics.printf("Score: " .. score, 0, love.graphics.getHeight()-100, love.graphics.getWidth(), "center")
     love.graphics.printf("High Score: " .. highScore, 0, love.graphics.getHeight()-100, love.graphics.getWidth(), "right")
-
+		if player.injured then
+				love.graphics.setColor(240/255,40/255,40/255)
+		end
     love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), nil, nil, sprites.player:getWidth()/2, sprites.player:getHeight()/2)
+		love.graphics.setColor(1,1,1)
 
     for i,z in ipairs(zombies) do
         local zombieSprite = nil
